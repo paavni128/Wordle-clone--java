@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class Game {
     public static final int WORD_LENGTH = 5;
@@ -39,4 +41,18 @@ public abstract class Game {
     }
     public boolean isOver() { return isWon() || guesses.size() >= MAX_ATTEMPTS; }
     public String getAnswer() { return answer; }
+
+    //keyboard state is the best state of each letter across all guesses
+    public Map<Character,LetterState> getKeyboardStates() {
+        Map<Character,LetterState> states = new HashMap<>();
+        for (Guess g : guesses) {
+            for(Tile t: g.getTiles()) {
+                LetterState current = states.get(t.getLetter());
+                if (current==null || t.getState().compareTo(current) < 0) {
+                    states.put(t.getLetter(), t.getState());
+                }
+            }
+        }
+        return states;
+    }
 }

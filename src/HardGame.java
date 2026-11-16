@@ -1,6 +1,6 @@
 public class HardGame extends Game {
-    public HardGame(String answer, Evaluator evaluator) {
-        super(answer, evaluator);
+    public HardGame(String answer, Evaluator evaluator, WordRepository words) {
+        super(answer, evaluator, words);
     }
 
     @Override

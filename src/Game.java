@@ -10,10 +10,12 @@ public abstract class Game {
     private final String answer;
     private final Evaluator evaluator;
     private final List<Guess> guesses = new ArrayList<>();
+    private final WordRepository words;
 
-    public Game(String answer, Evaluator evaluator) {
+    public Game(String answer, Evaluator evaluator, WordRepository words) {
         this.answer = answer.toLowerCase();
         this.evaluator = evaluator;
+        this.words = words;
     }
 
     public Guess submit(String input) throws InvalidWordException {
@@ -22,6 +24,8 @@ public abstract class Game {
             throw new InvalidWordException("Word must be " + WORD_LENGTH + " letters long.");
         if (!word.matches("[a-z]+"))
             throw new InvalidWordException("Use letters only.");
+        if (!words.isValid(word))
+            throw new InvalidWordException("Not a valid word.");
 
         validate(word);   // mode-specific rule, decided by the subclass
 
@@ -41,6 +45,7 @@ public abstract class Game {
     }
     public boolean isOver() { return isWon() || guesses.size() >= MAX_ATTEMPTS; }
     public String getAnswer() { return answer; }
+    public int getAttemptCount() { return guesses.size(); }
 
     //keyboard state is the best state of each letter across all guesses
     public Map<Character,LetterState> getKeyboardStates() {

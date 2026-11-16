@@ -12,11 +12,12 @@ public class Main {
         int choice = sc.nextInt();
         sc.nextLine(); // consume newline
 
+        WordRepository repo = new WordRepository(); // Assuming you have a WordRepository class
         Game game;
         if (choice == 1) {
-            game = new NormalGame("money", new StandardEvaluator());
+            game = new NormalGame(repo.getRandomAnswer(), new StandardEvaluator(), repo);
         } else {
-            game = new HardGame("money", new StandardEvaluator());
+            game = new HardGame(repo.getRandomAnswer(), new StandardEvaluator(), repo);
         }
 
         while (!game.isOver()) {

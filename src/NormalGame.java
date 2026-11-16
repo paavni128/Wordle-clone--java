@@ -1,6 +1,6 @@
 public class NormalGame extends Game {
-    public NormalGame(String answer, Evaluator evaluator) {
-        super(answer, evaluator);
+    public NormalGame(String answer, Evaluator evaluator,WordRepository words) {
+        super(answer, evaluator, words);
     }
 
     @Override

@@ -1,0 +1,1 @@
+public enum LetterState { CORRECT, PRESENT, ABSENT }

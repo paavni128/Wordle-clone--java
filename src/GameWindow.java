@@ -1,4 +1,5 @@
 
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -10,7 +11,20 @@ public class GameWindow extends JFrame {
     private int currentRow = 0;
     private int currentCol = 0;
 
-    public GameWindow() {
+    // Connection to Person A's game logic
+    private Game game;
+    private PlayerStats stats;
+    private WordRepository words;
+
+    private boolean gameFinished = false;
+    public GameWindow(Game game, PlayerStats stats, WordRepository words) {
+
+    this.game = game;
+    this.stats = stats;
+    this.words = words;
+
+        // Load previous player statistics
+        this.stats.loadStats();
 
         // Window settings
         setTitle("Wordle Game");
@@ -21,20 +35,12 @@ public class GameWindow extends JFrame {
 
         // Heading
         JLabel heading = new JLabel("WORDLE", JLabel.CENTER);
-
-        heading.setFont(
-            new Font("Arial", Font.BOLD, 36)
-        );
-
+        heading.setFont(new Font("Arial", Font.BOLD, 36));
         add(heading, BorderLayout.NORTH);
 
         // Grid panel
         JPanel gridPanel = new JPanel();
-
-        gridPanel.setLayout(
-            new GridLayout(6, 5, 8, 8)
-        );
-
+        gridPanel.setLayout(new GridLayout(6, 5, 8, 8));
         gridPanel.setBorder(
             BorderFactory.createEmptyBorder(20, 50, 20, 50)
         );
@@ -51,9 +57,7 @@ public class GameWindow extends JFrame {
                 );
 
                 tiles[i][j].setBorder(
-                    BorderFactory.createLineBorder(
-                        Color.GRAY, 2
-                    )
+                    BorderFactory.createLineBorder(Color.GRAY, 2)
                 );
 
                 tiles[i][j].setOpaque(true);
@@ -67,71 +71,29 @@ public class GameWindow extends JFrame {
 
         // On-screen keyboard panel
         JPanel keyboardPanel = new JPanel();
-
-        keyboardPanel.setLayout(
-            new GridLayout(3, 1, 5, 5)
-        );
-
+        keyboardPanel.setLayout(new GridLayout(3, 1, 5, 5));
         keyboardPanel.setBorder(
             BorderFactory.createEmptyBorder(5, 10, 15, 10)
         );
 
-        // First keyboard row
-        keyboardPanel.add(
-            createKeyboardRow("QWERTYUIOP")
-        );
-
-        // Second keyboard row
-        keyboardPanel.add(
-            createKeyboardRow("ASDFGHJKL")
-        );
+        keyboardPanel.add(createKeyboardRow("QWERTYUIOP"));
+        keyboardPanel.add(createKeyboardRow("ASDFGHJKL"));
 
         // Third keyboard row
         JPanel thirdRow = new JPanel(
             new FlowLayout(FlowLayout.CENTER, 2, 2)
         );
 
-        thirdRow.add(
-            createActionButton("ENTER", "ENTER")
-        );
-
-        thirdRow.add(
-            createKeyboardRow("ZXCVBNM")
-        );
-
-        thirdRow.add(
-            createActionButton("DEL", "BACKSPACE")
-        );
+        thirdRow.add(createActionButton("ENTER", "ENTER"));
+        thirdRow.add(createKeyboardRow("ZXCVBNM"));
+        thirdRow.add(createActionButton("DEL", "BACKSPACE"));
 
         keyboardPanel.add(thirdRow);
 
         add(keyboardPanel, BorderLayout.SOUTH);
 
         // Physical keyboard input
-        addKeyListener(new KeyAdapter() {
-
-            public void keyTyped(KeyEvent e) {
-
-                char ch = e.getKeyChar();
-
-                if (Character.isLetter(ch)) {
-                    addLetter(ch);
-                }
-            }
-
-            public void keyPressed(KeyEvent e) {
-
-                if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
-                    deleteLetter();
-                }
-
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    submitRow();
-                }
-            }
-        });
-
-        setFocusable(true);
+        setupKeyboardInput();
     }
 
     // Create a row of letter buttons
@@ -143,25 +105,13 @@ public class GameWindow extends JFrame {
 
         for (char ch : letters.toCharArray()) {
 
-            JButton button = new JButton(
-                String.valueOf(ch)
-            );
+            JButton button = new JButton(String.valueOf(ch));
 
-            button.setPreferredSize(
-                new Dimension(38, 48)
-            );
-
-            button.setFont(
-                new Font("Arial", Font.BOLD, 16)
-            );
-
-            button.setMargin(
-                new Insets(2, 2, 2, 2)
-            );
-
+            button.setPreferredSize(new Dimension(38, 48));
+            button.setFont(new Font("Arial", Font.BOLD, 16));
+            button.setMargin(new Insets(2, 2, 2, 2));
             button.setFocusable(false);
 
-            // Button click action
             button.addActionListener(e -> addLetter(ch));
 
             row.add(button);
@@ -171,41 +121,25 @@ public class GameWindow extends JFrame {
     }
 
     // Create ENTER and DEL buttons
-    private JButton createActionButton(
-            String text, String action) {
+    private JButton createActionButton(String text, String action) {
 
         JButton button = new JButton(text);
 
         if (action.equals("ENTER")) {
-
-            button.setPreferredSize(
-                new Dimension(85, 48)
-            );
-
+            button.setPreferredSize(new Dimension(85, 48));
         } else {
-
-            button.setPreferredSize(
-                new Dimension(55, 48)
-            );
+            button.setPreferredSize(new Dimension(55, 48));
         }
 
-        button.setFont(
-            new Font("Arial", Font.BOLD, 13)
-        );
-
-        button.setMargin(
-            new Insets(2, 2, 2, 2)
-        );
-
+        button.setFont(new Font("Arial", Font.BOLD, 13));
+        button.setMargin(new Insets(2, 2, 2, 2));
         button.setFocusable(false);
 
         button.addActionListener(e -> {
 
             if (action.equals("ENTER")) {
                 submitRow();
-            }
-
-            else if (action.equals("BACKSPACE")) {
+            } else {
                 deleteLetter();
             }
         });
@@ -213,10 +147,70 @@ public class GameWindow extends JFrame {
         return button;
     }
 
+    // Physical keyboard input using Swing key bindings
+    private void setupKeyboardInput() {
+
+        JRootPane root = getRootPane();
+
+        InputMap inputMap = root.getInputMap(
+            JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
+
+        ActionMap actionMap = root.getActionMap();
+
+        // Letter keys A-Z
+        // Letter keys A-Z
+for (int i = 0; i < 26; i++) {
+
+    int keyCode = KeyEvent.VK_A + i;
+    char letter = (char) ('A' + i);
+
+    String keyName = "letter_" + letter;
+
+    inputMap.put(
+        KeyStroke.getKeyStroke(keyCode, 0),
+        keyName
+    );
+
+    actionMap.put(keyName, new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            addLetter(letter);
+        }
+    });
+}
+
+        // Backspace key
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0),
+            "delete"
+        );
+
+        actionMap.put("delete", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteLetter();
+            }
+        });
+
+        // Enter key
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+            "submit"
+        );
+
+        actionMap.put("submit", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                submitRow();
+            }
+        });
+    }
+
     // Add a letter to the current tile
     private void addLetter(char ch) {
 
-        if (currentRow < 6 && currentCol < 5) {
+        if (!gameFinished && currentRow < 6 && currentCol < 5) {
 
             tiles[currentRow][currentCol].setText(
                 String.valueOf(ch).toUpperCase()
@@ -229,7 +223,7 @@ public class GameWindow extends JFrame {
     // Delete the previous letter
     private void deleteLetter() {
 
-        if (currentRow < 6 && currentCol > 0) {
+        if (!gameFinished && currentRow < 6 && currentCol > 0) {
 
             currentCol--;
 
@@ -237,41 +231,126 @@ public class GameWindow extends JFrame {
         }
     }
 
-    // Move to the next row
+    // Submit the current guess to Person A's Game class
     private void submitRow() {
 
-        if (currentRow < 6 && currentCol == 5) {
+        if (gameFinished) {
+            return;
+        }
 
-            currentRow++;
-            currentCol = 0;
-
-        } else if (currentCol < 5) {
+        if (currentCol < 5) {
 
             JOptionPane.showMessageDialog(
                 this,
                 "Enter all 5 letters first!"
             );
+
+            return;
         }
 
-        if (currentRow == 6) {
+        // Collect the five letters
+        StringBuilder guessBuilder = new StringBuilder();
+
+        for (int i = 0; i < 5; i++) {
+            guessBuilder.append(
+                tiles[currentRow][i].getText().toLowerCase()
+            );
+        }
+        String word = guessBuilder.toString();
+
+// Check whether the word exists in valid_words.txt
+if (!words.isValid(word)) {
+
+    JOptionPane.showMessageDialog(
+        this,
+        "Not a valid word.",
+        "Invalid Guess",
+        JOptionPane.WARNING_MESSAGE
+    );
+
+    return;
+}
+
+try {
+
+            // Submit guess to Person A's game logic
+            Guess guess = game.submit(word);
+
+            // Display evaluated tiles
+            Tile[] result = guess.getTiles();
+
+            for (int i = 0; i < result.length; i++) {
+
+                tiles[currentRow][i].setBackground(
+                    getTileColor(result[i].getState())
+                );
+
+                tiles[currentRow][i].setForeground(Color.WHITE);
+            }
+
+            // Move to the next row
+            currentRow++;
+            currentCol = 0;
+
+            // Check whether the game has ended
+            if (game.isOver()) {
+                finishGame();
+            }
+
+        } catch (InvalidWordException e) {
 
             JOptionPane.showMessageDialog(
                 this,
-                "No more attempts!"
+                e.getMessage(),
+                "Invalid Guess",
+                JOptionPane.WARNING_MESSAGE
             );
         }
     }
 
-    // Main method
-    public static void main(String[] args) {
+    // Convert LetterState into a tile colour
+    private Color getTileColor(LetterState state) {
 
-        SwingUtilities.invokeLater(() -> {
+        switch (state) {
 
-            GameWindow window = new GameWindow();
+            case CORRECT:
+                return new Color(106, 170, 100);
 
-            window.setVisible(true);
+            case PRESENT:
+                return new Color(201, 180, 88);
 
-            window.requestFocusInWindow();
-        });
+            case ABSENT:
+                return new Color(120, 124, 126);
+
+            default:
+                return Color.WHITE;
+        }
+    }
+
+    // Update statistics when the game ends
+    private void finishGame() {
+
+        gameFinished = true;
+
+        boolean won = game.isWon();
+
+        stats.updateStats(won);
+        stats.saveStats();
+
+        if (won) {
+
+            JOptionPane.showMessageDialog(
+                this,
+                "Congratulations! You guessed the word!"
+            );
+
+        } else {
+
+            JOptionPane.showMessageDialog(
+                this,
+                "Game Over! The correct word was: "
+                + game.getAnswer().toUpperCase()
+            );
+        }
     }
 }

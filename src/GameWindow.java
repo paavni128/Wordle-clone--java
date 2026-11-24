@@ -11,24 +11,27 @@ public class GameWindow extends JFrame {
     private int currentRow = 0;
     private int currentCol = 0;
 
-    // Connection to Person A's game logic
+    // Game connections
     private Game game;
     private PlayerStats stats;
     private WordRepository words;
 
     private boolean gameFinished = false;
+
+    // New UI components
+    private JComboBox<String> modeSelector;
+    private JButton reloadButton;
+
     public GameWindow(Game game, PlayerStats stats, WordRepository words) {
 
-    this.game = game;
-    this.stats = stats;
-    this.words = words;
+        this.game = game;
+        this.stats = stats;
+        this.words = words;
 
-        // Load previous player statistics
         this.stats.loadStats();
 
-        // Window settings
         setTitle("Wordle Game");
-        setSize(500, 750);
+        setSize(500, 780);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
@@ -36,7 +39,42 @@ public class GameWindow extends JFrame {
         // Heading
         JLabel heading = new JLabel("WORDLE", JLabel.CENTER);
         heading.setFont(new Font("Arial", Font.BOLD, 36));
-        add(heading, BorderLayout.NORTH);
+
+        // Top panel containing heading and controls
+        JPanel topPanel = new JPanel(new BorderLayout(5, 10));
+        topPanel.add(heading, BorderLayout.NORTH);
+
+        // Mode dropdown
+        modeSelector = new JComboBox<>(
+            new String[]{"Normal Mode", "Hard Mode"}
+        );
+
+        // Select the current game's mode
+        if (game instanceof HardGame) {
+            modeSelector.setSelectedItem("Hard Mode");
+        } else {
+            modeSelector.setSelectedItem("Normal Mode");
+        }
+
+        modeSelector.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        // Reload button
+        reloadButton = new JButton("↻ Reload");
+        reloadButton.setFont(new Font("Arial", Font.BOLD, 14));
+        reloadButton.setFocusable(false);
+
+        // Controls panel
+        JPanel controlsPanel = new JPanel(
+            new FlowLayout(FlowLayout.CENTER, 15, 5)
+        );
+
+        controlsPanel.add(new JLabel("Game Mode:"));
+        controlsPanel.add(modeSelector);
+        controlsPanel.add(reloadButton);
+
+        topPanel.add(controlsPanel, BorderLayout.SOUTH);
+
+        add(topPanel, BorderLayout.NORTH);
 
         // Grid panel
         JPanel gridPanel = new JPanel();
@@ -69,7 +107,7 @@ public class GameWindow extends JFrame {
 
         add(gridPanel, BorderLayout.CENTER);
 
-        // On-screen keyboard panel
+        // On-screen keyboard
         JPanel keyboardPanel = new JPanel();
         keyboardPanel.setLayout(new GridLayout(3, 1, 5, 5));
         keyboardPanel.setBorder(
@@ -92,8 +130,56 @@ public class GameWindow extends JFrame {
 
         add(keyboardPanel, BorderLayout.SOUTH);
 
+        // Reload button action
+        reloadButton.addActionListener(e -> restartGame());
+
+        // Dropdown action
+        modeSelector.addActionListener(e -> restartGame());
+
         // Physical keyboard input
         setupKeyboardInput();
+    }
+
+    // Create a new game using the selected mode
+    private Game createNewGame() {
+
+        String answer = words.getRandomAnswer();
+        Evaluator evaluator = new StandardEvaluator();
+
+        String selectedMode =
+            (String) modeSelector.getSelectedItem();
+
+        if ("Hard Mode".equals(selectedMode)) {
+            return new HardGame(answer, evaluator);
+        }
+
+        return new NormalGame(answer, evaluator);
+    }
+
+    // Restart the game
+    private void restartGame() {
+
+        // Create a completely new game
+        game = createNewGame();
+
+        // Reset game status
+        currentRow = 0;
+        currentCol = 0;
+        gameFinished = false;
+
+        // Clear all tiles
+        for (int i = 0; i < 6; i++) {
+
+            for (int j = 0; j < 5; j++) {
+
+                tiles[i][j].setText("");
+                tiles[i][j].setBackground(Color.WHITE);
+                tiles[i][j].setForeground(Color.BLACK);
+            }
+        }
+
+        // Return keyboard focus to the game
+        getRootPane().requestFocusInWindow();
     }
 
     // Create a row of letter buttons
@@ -147,7 +233,7 @@ public class GameWindow extends JFrame {
         return button;
     }
 
-    // Physical keyboard input using Swing key bindings
+    // Physical keyboard input
     private void setupKeyboardInput() {
 
         JRootPane root = getRootPane();
@@ -159,28 +245,27 @@ public class GameWindow extends JFrame {
         ActionMap actionMap = root.getActionMap();
 
         // Letter keys A-Z
-        // Letter keys A-Z
-for (int i = 0; i < 26; i++) {
+        for (int i = 0; i < 26; i++) {
 
-    int keyCode = KeyEvent.VK_A + i;
-    char letter = (char) ('A' + i);
+            int keyCode = KeyEvent.VK_A + i;
+            char letter = (char) ('A' + i);
 
-    String keyName = "letter_" + letter;
+            String keyName = "letter_" + letter;
 
-    inputMap.put(
-        KeyStroke.getKeyStroke(keyCode, 0),
-        keyName
-    );
+            inputMap.put(
+                KeyStroke.getKeyStroke(keyCode, 0),
+                keyName
+            );
 
-    actionMap.put(keyName, new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            addLetter(letter);
+            actionMap.put(keyName, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    addLetter(letter);
+                }
+            });
         }
-    });
-}
 
-        // Backspace key
+        // Backspace
         inputMap.put(
             KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0),
             "delete"
@@ -193,7 +278,7 @@ for (int i = 0; i < 26; i++) {
             }
         });
 
-        // Enter key
+        // Enter
         inputMap.put(
             KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
             "submit"
@@ -207,7 +292,7 @@ for (int i = 0; i < 26; i++) {
         });
     }
 
-    // Add a letter to the current tile
+    // Add a letter
     private void addLetter(char ch) {
 
         if (!gameFinished && currentRow < 6 && currentCol < 5) {
@@ -220,7 +305,7 @@ for (int i = 0; i < 26; i++) {
         }
     }
 
-    // Delete the previous letter
+    // Delete a letter
     private void deleteLetter() {
 
         if (!gameFinished && currentRow < 6 && currentCol > 0) {
@@ -231,7 +316,7 @@ for (int i = 0; i < 26; i++) {
         }
     }
 
-    // Submit the current guess to Person A's Game class
+    // Submit guess
     private void submitRow() {
 
         if (gameFinished) {
@@ -248,7 +333,6 @@ for (int i = 0; i < 26; i++) {
             return;
         }
 
-        // Collect the five letters
         StringBuilder guessBuilder = new StringBuilder();
 
         for (int i = 0; i < 5; i++) {
@@ -256,29 +340,29 @@ for (int i = 0; i < 26; i++) {
                 tiles[currentRow][i].getText().toLowerCase()
             );
         }
+
         String word = guessBuilder.toString();
 
-// Check whether the word exists in valid_words.txt
-if (!words.isValid(word)) {
+        // Validate word
+        if (!words.isValid(word)) {
 
-    JOptionPane.showMessageDialog(
-        this,
-        "Not a valid word.",
-        "Invalid Guess",
-        JOptionPane.WARNING_MESSAGE
-    );
+            JOptionPane.showMessageDialog(
+                this,
+                "Not a valid word.",
+                "Invalid Guess",
+                JOptionPane.WARNING_MESSAGE
+            );
 
-    return;
-}
+            return;
+        }
 
-try {
+        try {
 
-            // Submit guess to Person A's game logic
             Guess guess = game.submit(word);
 
-            // Display evaluated tiles
             Tile[] result = guess.getTiles();
 
+            // Colour evaluated tiles
             for (int i = 0; i < result.length; i++) {
 
                 tiles[currentRow][i].setBackground(
@@ -288,11 +372,9 @@ try {
                 tiles[currentRow][i].setForeground(Color.WHITE);
             }
 
-            // Move to the next row
             currentRow++;
             currentCol = 0;
 
-            // Check whether the game has ended
             if (game.isOver()) {
                 finishGame();
             }
@@ -308,7 +390,7 @@ try {
         }
     }
 
-    // Convert LetterState into a tile colour
+    // Tile colours
     private Color getTileColor(LetterState state) {
 
         switch (state) {
@@ -327,7 +409,7 @@ try {
         }
     }
 
-    // Update statistics when the game ends
+    // Finish game and update statistics
     private void finishGame() {
 
         gameFinished = true;

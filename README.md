@@ -54,7 +54,15 @@ Game logic is separate from the UI: `Game` never imports Swing, so the same logi
 - NIREEKSHA – GUI, word repository, statistics, file handling
 
 ## Screenshots
-[add 2-3 screenshots here: normal game, win popup, hard mode error]
+<img width="647" height="988" alt="image" src="https://github.com/user-attachments/assets/f78c5d5d-95ed-4eb4-902c-3f3e2de977b0" />
+<img width="600" height="977" alt="image" src="https://github.com/user-attachments/assets/37204652-d14a-4cb5-8ef4-f7846de2a430" />
+<img width="616" height="982" alt="image" src="https://github.com/user-attachments/assets/1dc77913-da53-4e2c-ad3b-9b6a422887f9" />
+
 
 ## Possible improvements
-Dark mode, hint button, daily word, sound effects.
+Colour the on-screen keys using getKeyboardStates().
+Add a statistics window with win percentage and a guess-distribution chart.
+Add a daily word, hints, sound effects and dark mode.
+Add tile animations and a share-result feature.
+Allow different word lengths and languages through configurable word lists and settings.
+

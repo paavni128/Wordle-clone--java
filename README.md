@@ -12,7 +12,7 @@ A desktop Wordle game built in Java with Swing, made for our OOP course project.
 - Player statistics saved to a file (games played, win %, streak)
 
 ## How to run
-Requires JDK 17.0.15
+Requires JDK 17 or later (developed and tested on JDK 17.0.15 and JDK 21.0.12.1)
 
 ```
 javac -d bin src/*.java

@@ -6,7 +6,6 @@ A desktop Wordle game built in Java with Swing, made for our OOP course project.
 - 6 attempts to guess a 5-letter word, with green / yellow / grey tile feedback
 - Correct handling of duplicate letters
 - Dictionary validation (non-words are rejected)
-- On-screen keyboard that colours itself as you play
 - Normal and Hard mode (Hard forces you to reuse revealed hints)
 - Restart button for a new random word
 - Player statistics saved to a file (games played, win %, streak)
